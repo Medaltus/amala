@@ -1,0 +1,17 @@
+{
+  "outputDirectory": "Public",
+  "functions": {
+    "api/render-pdf.js": {
+      "maxDuration": 60,
+      "memory": 2048,
+      "includeFiles": "node_modules/@sparticuz/chromium/bin/**"
+    },
+    "api/run-listing-audit.js":       { "maxDuration": 300 },
+    "api/write-listing-audit.js":     { "maxDuration": 300 },
+    "api/run-analysis.js":            { "maxDuration": 300 },
+    "api/write-insights.js":          { "maxDuration": 300 },
+    "api/run-ppc-strategy-analysis.js": { "maxDuration": 300 },
+    "api/write-report-insights.js":   { "maxDuration": 300 },
+    "api/upload-insight-image.js":    { "maxDuration": 60 }
+  }
+}

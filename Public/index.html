@@ -10997,6 +10997,10 @@ async function initSnsExternal() {
       const csv = await res.text();
       if (!isCsv(csv)) return null;
       const rows = parseCsv(csv);
+      rows.forEach(r => Object.keys(r).forEach(k => {
+        const m = /^accomplished(\d+)_(.+)$/.exec(k);
+        if (m && !r[`acc${m[1]}_${m[2]}`]) r[`acc${m[1]}_${m[2]}`] = r[k];
+      }));
       const keys = Object.keys(matchFields);
       return rows.find(r => keys.every(k => String(r[k] || '') === String(matchFields[k]))) || null;
     } catch (e) { console.warn('[InsightBlock] fetchRow failed:', e.message); return null; }

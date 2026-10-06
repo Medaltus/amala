@@ -156,8 +156,8 @@ nav > .nav-btn:not(.active):hover{color:#fff;}
 
 
 /* ── Topbar ── */
-.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-.topbar-title{font-size:14px;font-weight:600;color:var(--navy);letter-spacing:-.2px;}
+.topbar{background:transparent;border-bottom:none;padding:0 28px;height:52px;display:flex;align-items:center;justify-content:flex-end;flex-shrink:0;}
+.topbar-title{display:none;}
 .topbar-right{display:flex;align-items:center;gap:10px;}
 .topbar-date{font-size:11px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 10px;}
 /* ── Clerk user button — ADDED 2026-08-21, ported from Cosmette's dashboard ── */
@@ -12489,7 +12489,7 @@ window.bmRenderMomentumCards = function () {
 };
 
 // ── Sales > Insights tab — added 2026-09-30 per Jaclyn ──────────────────
-// Unit Sales by Product Category (Collagen vs Collagen Stick Packs, using
+// Unit Sales by Product Category (condensed chart groups — see CHART_GROUPS — using
 // the same column-K category assignment already wired up for Listing
 // Audit/Products — see runListingAudit's skuToCategory for the original
 // build of this lookup) + triggers the now-relocated initSns() for the
@@ -12538,6 +12538,26 @@ window.initSalesInsights = async function () {
       });
     }
 
+    // Chart groups — added 2026-10-06 per Jaclyn. Column K's detailed
+    // categories are condensed into 8 groups for THIS chart only (Products/
+    // Listing tabs keep the raw column K values). Order = legend order;
+    // colors = Medaltus brand palette, fixed per group so a category keeps
+    // its color month to month. Anything not listed (e.g. "ALA • Bundle")
+    // is left out of the chart.
+    const CHART_GROUPS = [
+      { label: 'Serums',         color: '#24E9A3', match: ['facial serum', 'hyaluronic acid facial serum'] },
+      { label: 'Eye Creams',     color: '#F4DFD0', match: ['under eye cream', 'under eye treatment'] },
+      { label: 'Face Masks',     color: '#6B7BA2', match: ['face mask', 'face peel'] },
+      { label: 'Cleansers',      color: '#CCD3D5', match: ['face cleanser'] },
+      { label: 'Moisturizers',   color: '#001F60', match: ['face moisturizer'] },
+      { label: 'Cosmetic Cases', color: '#B8763A', match: ['cosmetic case'] },
+      { label: 'Face Oils',      color: '#B84040', match: ['face oil'] },
+      { label: 'Toners',         color: '#0D3494', match: ['facial toner'] },
+    ];
+    // "ALA • Face Mask" -> "face mask" (drops the brand prefix, normalizes nbsp/case)
+    const normCat = c => String(c || '').replace(/\u00a0/g, ' ').replace(/^.*?•\s*/, '').replace(/\s+/g, ' ').trim().toLowerCase();
+    const chartGroupOf = c => { const n = normCat(c); const g = CHART_GROUPS.find(g => g.match.includes(n)); return g ? g.label : null; };
+
     // Amazon orders — switched 2026-09-30 per Jaclyn, from SHEET_ORDERS
     // (a rolling ~90-day cache) to SHEET_ORDERS_HISTORICAL, for real
     // multi-month trend data. Confirmed the real schema directly before
@@ -12577,8 +12597,8 @@ window.initSalesInsights = async function () {
       const skuList = (r.skus || '').split(',').map(s => s.trim().toUpperCase().replace(/-SF$/i, '')).filter(Boolean);
       if (!skuList.length) return;
       skuList.forEach(sku => {
-        const category = skuToCategory[sku];
-        if (!category) return; // not a known Just Bjorn SKU (or column K not assigned yet)
+        const category = chartGroupOf(skuToCategory[sku]);
+        if (!category) return; // unknown SKU, column K blank, or a category not charted (e.g. Bundle)
         if (!byMonth[monthKey]) byMonth[monthKey] = {};
         byMonth[monthKey][category] = (byMonth[monthKey][category] || 0) + 1; // 1 unit per listed SKU — see note above on multi-item orders
       });
@@ -12588,12 +12608,13 @@ window.initSalesInsights = async function () {
     if (!monthKeys.length) { console.warn('[Amala][SalesInsights] no order rows matched a known SKU category — check column K assignments.'); return; }
     const monthAbbr = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const labels = monthKeys.map(k => { const [y, m] = k.split('-'); return `${monthAbbr[parseInt(m, 10) - 1]} '${y.slice(2)}`; });
-    const categories = [...new Set(Object.values(byMonth).flatMap(m => Object.keys(m)))];
-    const COLORS = ['#001f60', '#24e9a3', '#c87d2f', '#6b7ba2'];
-    const datasets = categories.map((cat, i) => ({
-      label: cat,
-      data: monthKeys.map(k => byMonth[k][cat] || 0),
-      backgroundColor: COLORS[i % COLORS.length],
+    // Fixed group order + colors; groups with no units in the window are omitted from the legend.
+    const present = new Set(Object.values(byMonth).flatMap(m => Object.keys(m)));
+    const datasets = CHART_GROUPS.filter(g => present.has(g.label)).map(g => ({
+      label: g.label,
+      data: monthKeys.map(k => byMonth[k][g.label] || 0),
+      backgroundColor: g.color,
+      borderRadius: 3,
     }));
 
     if (window._categorySalesChart) { window._categorySalesChart.destroy(); window._categorySalesChart = null; }

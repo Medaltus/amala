@@ -1231,6 +1231,17 @@ details.inci-toggle[open] summary::before{content:'▾ ';}
   .asn-grid{grid-template-columns:1fr;}
   .asn-meta-form-grid{grid-template-columns:1fr;}
 }
+/* Client Inventory → Reviews: category + product tabs (from Cosmette) */
+.cat-tabs{display:flex;gap:2px;margin-bottom:20px;background:var(--white);border:1px solid var(--border);border-radius:999px;padding:4px;overflow-x:auto;flex-wrap:wrap;}
+.cat-tab{border:none;background:none;font-family:var(--font);font-size:12px;font-weight:600;color:var(--muted);padding:8px 16px;border-radius:999px;cursor:pointer;transition:all .13s;white-space:nowrap;}
+.cat-tab.active{background:var(--navy);color:#fff;}
+.cat-panel{display:none;}
+.cat-panel.active{display:block;}
+.prod-tabs{display:flex;gap:2px;margin-bottom:16px;background:var(--bg);border:1px solid var(--border2);border-radius:999px;padding:3px;overflow-x:auto;flex-wrap:wrap;}
+.prod-tab{border:none;background:none;font-family:var(--font);font-size:11.5px;font-weight:600;color:var(--muted);padding:6px 13px;border-radius:999px;cursor:pointer;white-space:nowrap;}
+.prod-tab.active{background:var(--navy);color:#fff;}
+.prod-panel{display:none;}
+.prod-panel.active{display:block;}
 </style>
 <link rel="icon" type="image/png" href="amala_favicon.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -2615,72 +2626,18 @@ details.inci-toggle[open] summary::before{content:'▾ ';}
        Wired up by initInventoryExternalPage(). -->
   <div class="page" id="page-inventory-external">
     <div class="page-hd">
-      <div><div class="page-title">Inventory</div><div class="page-sub">Consignment stock levels · Inbound shipment tracking</div></div>
+      <div><div class="page-title">Inventory</div><div class="page-sub">Amazon · Customer reviews by category</div></div>
     </div>
-
-    <div class="channel-tabs-row" style="margin-bottom:18px;">
-      <div class="channel-tabs">
-        <button class="ch-tab active" onclick="showChannel('inventory-external','ix-stock',this)">📦 Stock Levels</button>
-        <button class="ch-tab" onclick="showChannel('inventory-external','ix-inbound',this)">🚚 Inbound Shipments</button>
+    <!-- Reviews only, per Jaclyn 2026-10-06 (same layout as Cosmette's
+         external Inventory page). Built by window.initExternalReviews().
+         Groups by Master SKU List column K, condensed into the same 8
+         groups as the Insights category chart. Until column K is filled,
+         everything shows under one "All Products" tab. -->
+    <div class="card" style="margin-top:14px;">
+      <div class="card-title">Reviews</div>
+      <div id="ext-reviews-root">
+        <div class="placeholder-block"><div class="ph-icon">⭐</div><div class="ph-title">Loading reviews…</div></div>
       </div>
-    </div>
-
-    <!-- ── Stock Levels ── -->
-    <div class="channel-page active" id="ix-stock">
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;">
-        <div class="kpi-card" style="border-top:3px solid var(--navy);"><div class="kpi-label">Total SKUs</div><div class="kpi-value" id="ix-kpi-total-skus">—</div><div style="font-size:11px;color:var(--muted);margin-top:4px;">Active products</div></div>
-        <div class="kpi-card" style="border-top:3px solid var(--green);"><div class="kpi-label">Total Units On Hand</div><div class="kpi-value" id="ix-kpi-units-onhand">—</div><div style="font-size:11px;color:var(--muted);margin-top:4px;">Across all SKUs</div></div>
-        <div class="kpi-card" style="border-top:3px solid var(--danger);"><div class="kpi-label">Out of Stock</div><div class="kpi-value" id="ix-kpi-oos">—</div><div style="font-size:11px;color:var(--muted);margin-top:4px;">SKUs at zero</div></div>
-        <div class="kpi-card" style="border-top:3px solid var(--warn);"><div class="kpi-label">Low Stock</div><div class="kpi-value" id="ix-kpi-low">—</div><div style="font-size:11px;color:var(--muted);margin-top:4px;">10 units or fewer</div></div>
-      </div>
-
-      <div class="ppc-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap;">
-          <input type="text" id="ix-stock-search" placeholder="Search SKU, product name…" style="flex:1;min-width:220px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-family:var(--font);font-size:12.5px;">
-          <div style="display:flex;gap:8px;align-items:center;">
-            <span id="ix-stock-updated" style="font-size:11px;color:var(--muted);"></span>
-            <button class="asn-btn-secondary" onclick="downloadStockLevelsCsv()">⬇ Download CSV</button>
-            <button class="asn-btn-secondary" onclick="loadStockLevelsExternal()">↻ Refresh</button>
-          </div>
-        </div>
-        <div id="ix-stock-count" style="font-size:11.5px;color:var(--muted);margin-bottom:8px;"></div>
-        <div style="overflow-x:auto;">
-          <table class="data-table">
-            <thead><tr>
-              <th>SKU</th><th>Product Name</th><th>On Hand</th><th>Inbound</th>
-            </tr></thead>
-            <tbody id="ix-stock-tbody"><tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted);font-style:italic;">Loading…</td></tr></tbody>
-          </table>
-        </div>
-        <div class="ppc-note">ℹ Inbound will populate once an ASN is uploaded for that SKU.</div>
-      </div>
-    </div>
-
-    <!-- ── Inbound Shipments ── -->
-    <div class="channel-page" id="ix-inbound">
-      <div class="asn-header">
-        <div>
-          <div style="font-size:13px;color:var(--muted);">Upload a CSV to notify Medaltus of incoming inventory. Track open and received shipments here.</div>
-        </div>
-        <div class="asn-header-actions">
-          <button class="asn-btn-secondary" onclick="downloadAsnTemplate()">⬇ Download ASN Template</button>
-          <button class="asn-btn-primary" onclick="openAsnUploadModal()">⬆ Upload New ASN</button>
-        </div>
-      </div>
-
-      <div class="asn-subtabs">
-        <button class="asn-subtab active" onclick="showAsnSubTab('Open', this)">Open <span class="asn-subtab-count" id="asn-count-open">0</span></button>
-        <button class="asn-subtab" onclick="showAsnSubTab('Received', this)">Received <span class="asn-subtab-count" id="asn-count-received">0</span></button>
-      </div>
-
-      <div id="asn-list-open" class="asn-grid"></div>
-      <div id="asn-list-received" class="asn-grid" style="display:none;"></div>
-      <div id="asn-empty-state" class="asn-empty" style="display:none;">
-        <div class="asn-empty-icon">📭</div>
-        <div style="font-size:14px;font-weight:700;color:var(--navy);">No shipments yet</div>
-        <div style="font-size:12.5px;">Upload a CSV to create your first ASN.</div>
-      </div>
-      <div id="asn-error-state" class="asn-modal-error" style="display:none;margin-top:12px;"></div>
     </div>
   </div>
 
@@ -4055,6 +4012,7 @@ function showPage(id, btn) {
 
   if (id === 'overview' && !window._overviewLiveInit && typeof window.initOverviewLive === 'function') window.initOverviewLive();
   if (id === 'events' && typeof window.initEventStrategyHeader === 'function') window.initEventStrategyHeader();
+  if (id === 'inventory-external' && typeof window.initExternalReviews === 'function') window.initExternalReviews();
   // Fastest Path to Page 1 lives on the default "Insights" sub-tab of
   // each category, shown immediately on navigating here — load the
   // shared keyword tracker data now rather than waiting for someone to
@@ -22929,6 +22887,271 @@ window.addEventListener('load', async () => {
     console.warn('[Clerk] Auth check failed, internal section stays hidden:', err);
   }
 });
+</script>
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+// CLIENT INVENTORY — Reviews, grouped by category (ported from Cosmette's
+// initExternalReviews, 2026-10-06). Self-contained: its own CSV helpers so
+// it doesn't depend on same-named functions scoped inside other <script>s.
+// Categories: Master SKU List column K → the same 8 groups as the Insights
+// category chart. Empty column K → single "All Products" tab, so this
+// works today and splits automatically once Jaclyn finishes column K.
+// VOC Themes: reads SHEET_VOC_THEMES (amala tab) if a run-voc-themes.js
+// cron has written rows; otherwise shows the "not automated yet" note.
+// ═══════════════════════════════════════════════════════════════════════
+(function () {
+  'use strict';
+  const BRAND_TAB = 'amala';
+  const CHART_GROUPS = [
+    { label: 'Serums',         match: ['facial serum', 'hyaluronic acid facial serum'] },
+    { label: 'Eye Creams',     match: ['under eye cream', 'under eye treatment'] },
+    { label: 'Face Masks',     match: ['face mask', 'face peel'] },
+    { label: 'Cleansers',      match: ['face cleanser'] },
+    { label: 'Moisturizers',   match: ['face moisturizer'] },
+    { label: 'Cosmetic Cases', match: ['cosmetic case'] },
+    { label: 'Face Oils',      match: ['face oil'] },
+    { label: 'Toners',         match: ['facial toner'] },
+  ];
+  const normCat = c => String(c || '').replace(/\u00a0/g, ' ').replace(/^.*?•\s*/, '').replace(/\s+/g, ' ').trim();
+  function groupOf(raw) {
+    const n = normCat(raw); if (!n) return null;
+    const g = CHART_GROUPS.find(g => g.match.includes(n.toLowerCase()));
+    return g ? g.label : n;           // unmapped values (e.g. Bundle) keep their own name
+  }
+
+  function csvUrl(cfg) {
+    return (cfg.gid != null && cfg.gid !== '')
+      ? `https://docs.google.com/spreadsheets/d/${cfg.fileId}/export?format=csv&gid=${cfg.gid}`
+      : `https://docs.google.com/spreadsheets/d/${cfg.fileId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(BRAND_TAB)}`;
+  }
+  async function fetchText(url, ms) {
+    const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), ms || 20000);
+    try { const r = await fetch(url, { signal: ctl.signal }); if (!r.ok) throw new Error(`HTTP ${r.status}`); return await r.text(); }
+    catch (e) { if (e.name === 'AbortError') throw new Error('timeout'); throw e; }
+    finally { clearTimeout(t); }
+  }
+  const isCsv = t => { t = (t || '').trim(); return t.length > 0 && !t.startsWith('<') && !t.startsWith('{'); };
+  // Quote-aware across the whole text — review bodies contain line breaks.
+  function parseRecords(text) {
+    const recs = []; let f = '', rec = [], q = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) { if (c === '"') { if (text[i+1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+      else if (c === '"') q = true;
+      else if (c === ',') { rec.push(f); f = ''; }
+      else if (c === '\r') {}
+      else if (c === '\n') { rec.push(f); f = ''; recs.push(rec); rec = []; }
+      else f += c;
+    }
+    if (f.length || rec.length) { rec.push(f); recs.push(rec); }
+    return recs.filter(r => !(r.length === 1 && r[0] === ''));
+  }
+  function parseCsv(text) {
+    const recs = parseRecords(text); if (!recs.length) return [];
+    const hdr = recs[0].map(h => h.trim());
+    return recs.slice(1).map(r => { const o = {}; hdr.forEach((h, i) => { o[h] = (r[i] || '').trim(); }); return o; });
+  }
+  const baseSku = s => (s || '').trim().toUpperCase().replace(/-SF$/i, '');
+  function escapeHtml(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  }
+  function slugify(s) {
+    return String(s || 'uncategorized').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'uncategorized';
+  }
+
+  // Master SKU List: B = SKU, A = ASIN, C = Product Short Name, K = Product Category
+  async function fetchCatalog() {
+    const out = { nameBySku: {}, nameByAsin: {}, skuByAsin: {}, groupBySku: {} };
+    const cfg = window.SHEET_CFG && window.SHEET_CFG.SHEET_MASTER_SKU_LIST;
+    if (!cfg) return out;
+    try {
+      const csv = await fetchText(csvUrl(cfg) + `&_cb=${Date.now()}`, 20000);
+      if (!isCsv(csv)) return out;
+      parseRecords(csv.trim() + '\n').slice(1).forEach(c => {
+        const asin = (c[0] || '').trim().toUpperCase();
+        const sku = baseSku(c[1]);
+        const name = (c[2] || '').trim();
+        const grp = groupOf(c[10]);
+        if (asin && sku) out.skuByAsin[asin] = sku;
+        if (sku && grp) out.groupBySku[sku] = grp;
+        if (name) { if (sku) out.nameBySku[sku] = name; if (asin) out.nameByAsin[asin] = name; }
+      });
+    } catch (e) { console.warn('[Amala][ExtReviews] Master SKU List fetch failed:', e.message); }
+    return out;
+  }
+
+  function renderStars(rating) {
+    const n = Math.max(0, Math.min(5, Math.round(parseFloat(rating) || 0)));
+    return `<span class="rev-stars-${n}">${'★'.repeat(n)}</span>`;
+  }
+  function renderReviewCard(r) {
+    const purchaseType = /vine/i.test(r.purchase_type || '') ? 'Amazon Vine' : 'Verified Purchase';
+    return `<div class="rev-card">
+      <div class="rev-hdr"><span class="rev-name">${escapeHtml(r.reviewer_name)}</span>${renderStars(r.star_rating)}<span class="rev-date">${escapeHtml(purchaseType)}</span></div>
+      <div class="rev-title">"${escapeHtml(r.review_title)}"</div>
+      <div class="rev-body">${escapeHtml(r.review_text)}</div>
+    </div>`;
+  }
+  function renderStarDistribution(reviews) {
+    if (!reviews.length) return '<div style="color:var(--muted);font-size:12px;">No reviews found for this category.</div>';
+    const counts = { 5:0, 4:0, 3:0, 2:0, 1:0 }; let sum = 0;
+    reviews.forEach(r => { const n = Math.max(1, Math.min(5, Math.round(parseFloat(r.star_rating) || 0))); counts[n]++; sum += parseFloat(r.star_rating) || 0; });
+    const total = reviews.length, avg = (sum / total).toFixed(1);
+    const barColors = { 5:null, 4:'#a8d9c8', 3:'var(--warn)', 2:'#e8a080', 1:'var(--danger)' };
+    const rows = [5,4,3,2,1].map(n => {
+      const pct = Math.round((counts[n] / total) * 100);
+      const colorStyle = barColors[n] ? `background:${barColors[n]};` : '';
+      return `<div class="star-bar-row"><div class="star-bar-lbl">${n} ★</div><div class="star-bar-track"><div class="star-bar-fill" style="width:${pct}%;${colorStyle}"></div></div><div class="star-bar-count">${counts[n]}</div></div>`;
+    }).join('');
+    return `<div style="font-size:26px;font-weight:700;color:var(--navy);margin-bottom:4px;">${avg} <span style="font-size:16px;color:var(--muted);font-weight:400;">/ 5</span></div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">${total.toLocaleString()} total reviews</div>${rows}`;
+  }
+  function timeAgoLabel(dateStr) {
+    const d = Date.parse(dateStr); if (isNaN(d)) return '';
+    const days = Math.floor((Date.now() - d) / 86400000);
+    if (days < 0) return ''; if (days < 1) return 'today';
+    if (days < 14) return days + (days === 1 ? ' day ago' : ' days ago');
+    if (days < 60) return Math.floor(days / 7) + ' weeks ago';
+    if (days < 730) return Math.floor(days / 30) + ' months ago';
+    return Math.floor(days / 365) + ' years ago';
+  }
+  function renderVocThemes(themeRow) {
+    if (!themeRow || !themeRow.themes_json) {
+      return '<div style="font-size:12px;color:var(--muted);line-height:1.7;">⏳ Not automated yet — categorizing review text into themes is a real analysis step, not a mechanical data pull. Coming later.</div>';
+    }
+    let themes; try { themes = JSON.parse(themeRow.themes_json); } catch (e) { return '<div style="font-size:12px;color:var(--muted);">Could not load themes for this category.</div>'; }
+    if (!Array.isArray(themes) || !themes.length) return '<div style="font-size:12px;color:var(--muted);">No recurring themes identified yet.</div>';
+    const STATUS = {
+      active:   { bg: 'rgba(219,55,45,.1)',  color: 'var(--danger)', label: 'Active' },
+      new:      { bg: 'rgba(200,125,47,.12)', color: 'var(--warn)',   label: 'New Theme' },
+      resolved: { bg: 'rgba(36,233,163,.13)', color: '#1db88a',       label: 'Resolved' },
+    };
+    const rows = themes.map(t => {
+      const st = STATUS[t.status] || STATUS.active; const ago = timeAgoLabel(t.most_recent_review_date);
+      return `<div style="padding:10px 0;border-bottom:1px solid var(--border2);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
+          <div style="font-size:12.5px;font-weight:700;color:var(--navy);">${escapeHtml(t.theme || '')}</div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            ${ago ? `<span style="font-size:9.5px;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap;background:var(--bg2);color:var(--muted);">${escapeHtml(ago)}</span>` : ''}
+            <span style="font-size:9.5px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:999px;white-space:nowrap;background:${st.bg};color:${st.color};">${st.label}</span>
+          </div>
+        </div>
+        ${t.example_quote ? `<div style="font-size:11.5px;color:var(--muted);font-style:italic;margin-bottom:2px;">"${escapeHtml(t.example_quote)}"</div>` : ''}
+        ${t.note ? `<div style="font-size:11px;color:var(--muted);">${escapeHtml(t.note)}</div>` : ''}
+      </div>`;
+    }).join('');
+    return (themeRow.date ? `<div style="font-size:10px;color:var(--muted);margin-bottom:8px;">Last analyzed ${escapeHtml(themeRow.date)}</div>` : '') + rows;
+  }
+
+  async function buildReviewsUI(rootId, ns) {
+    const root = document.getElementById(rootId); if (!root) return;
+    const cfg = window.SHEET_CFG && window.SHEET_CFG.SHEET_AMAZON_REVIEWS;
+    if (!cfg || !cfg.fileId) { root.innerHTML = '<div class="placeholder-block"><div class="ph-icon">⭐</div><div class="ph-title">Reviews not yet connected</div></div>'; return; }
+    try {
+      const csv = await fetchText(csvUrl(cfg) + `&_cb=${Date.now()}`, 20000);
+      const allReviews = isCsv(csv) ? parseCsv(csv) : [];
+      console.log('[Amala][ExtReviews] review rows:', allReviews.length, '— columns:', allReviews.length ? Object.keys(allReviews[0]).join(' | ') : '(none)');
+      if (!allReviews.length) { root.innerHTML = '<div class="placeholder-block"><div class="ph-icon">⭐</div><div class="ph-title">No review data yet</div><div class="ph-sub">Reviews will appear here once the Amazon Reviews sheet has an Amala tab.</div></div>'; return; }
+
+      const themesByCategory = {};
+      const vocCfg = window.SHEET_CFG.SHEET_VOC_THEMES;
+      if (vocCfg && vocCfg.fileId) {
+        try {
+          const vocCsv = await fetchText(csvUrl(vocCfg) + `&_cb=${Date.now()}`, 20000);
+          (isCsv(vocCsv) ? parseCsv(vocCsv) : []).forEach(r => {
+            const cat = (r.category || '').trim(); if (!cat) return;
+            if (!themesByCategory[cat] || (r.date || '') >= (themesByCategory[cat].date || '')) themesByCategory[cat] = r;
+          });
+        } catch (e) { console.warn('[Amala][ExtReviews] VOC Themes fetch failed:', e.message); }
+      }
+
+      const cat = await fetchCatalog();
+      // Brand guard: only keep reviews for products in Amala's own Master
+      // SKU List tab. While SHEET_AMAZON_REVIEWS has no gid, the tab is
+      // fetched by name — this guarantees another brand's reviews can
+      // never render here even if Google falls back to a different tab.
+      const knownSkus = new Set(Object.values(cat.skuByAsin).concat(Object.keys(cat.nameBySku)));
+      const knownAsins = new Set(Object.keys(cat.skuByAsin).concat(Object.keys(cat.nameByAsin)));
+      if (knownSkus.size || knownAsins.size) {
+        const before = allReviews.length;
+        for (let i = allReviews.length - 1; i >= 0; i--) {
+          const r = allReviews[i];
+          if (!knownSkus.has(baseSku(r.sku)) && !knownAsins.has((r.asin || '').trim().toUpperCase())) allReviews.splice(i, 1);
+        }
+        if (before !== allReviews.length) console.warn('[Amala][ExtReviews] dropped', before - allReviews.length, 'review rows not in the Amala catalog');
+      }
+      if (!allReviews.length) { root.innerHTML = '<div class="placeholder-block"><div class="ph-icon">⭐</div><div class="ph-title">No review data yet</div><div class="ph-sub">Reviews will appear here once the Amazon Reviews sheet has an Amala tab.</div></div>'; return; }
+      const anyGroups = Object.keys(cat.groupBySku).length > 0;
+      const skuOf = r => baseSku(r.sku) || cat.skuByAsin[(r.asin || '').trim().toUpperCase()] || '';
+      const byCategory = {};
+      allReviews.forEach(r => {
+        const c = anyGroups ? (cat.groupBySku[skuOf(r)] || 'Other') : 'All Products';
+        (byCategory[c] = byCategory[c] || []).push(r);
+      });
+      const categories = Object.keys(byCategory).sort((a, b) => (a === 'Other') - (b === 'Other') || a.localeCompare(b));
+
+      const catTabsHtml = categories.map((c, i) =>
+        `<button class="cat-tab${i === 0 ? ' active' : ''}" onclick="window.__alaSelectReviewCategory('${rootId}','${slugify(c)}', this)">${escapeHtml(c)}</button>`).join('');
+
+      const catPanelsHtml = categories.map((c, i) => {
+        const catSlug = `${ns}-${slugify(c)}`;
+        const byProduct = {};
+        byCategory[c].forEach(r => {
+          const sku = skuOf(r);
+          const key = (sku || r.asin || r.product_name || 'unknown').trim();
+          const label = cat.nameBySku[sku] || cat.nameByAsin[(r.asin || '').toUpperCase()] || r.product_name || key;
+          (byProduct[key] = byProduct[key] || { label, reviews: [] }).reviews.push(r);
+        });
+        const keys = Object.keys(byProduct).sort((a, b) => byProduct[a].label.localeCompare(byProduct[b].label));
+        const prodTabs = keys.map((k, j) =>
+          `<button class="prod-tab${j === 0 ? ' active' : ''}" onclick="window.__alaSelectReviewProduct('${catSlug}','${slugify(k)}', this)">${escapeHtml(byProduct[k].label)}</button>`).join('');
+        const prodPanels = keys.map((k, j) => {
+          const top5 = byProduct[k].reviews.slice().sort((a, b) => (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0)).slice(0, 5);
+          return `<div class="prod-panel${j === 0 ? ' active' : ''}" id="prodpanel-${catSlug}-${slugify(k)}">
+            ${top5.length ? top5.map(renderReviewCard).join('') : '<div style="color:var(--muted);font-size:12px;">No reviews found for this product.</div>'}</div>`;
+        }).join('');
+        return `<div class="cat-panel${i === 0 ? ' active' : ''}" id="catpanel-${catSlug}">
+          <div class="two-col" style="margin-bottom:16px;">
+            <div class="card"><div class="card-title">Star Rating Distribution — ${escapeHtml(c)}</div>${renderStarDistribution(byCategory[c])}</div>
+            <div class="card"><div class="card-title">VOC Themes — ${escapeHtml(c)}</div>${renderVocThemes(themesByCategory[c])}</div>
+          </div>
+          <div class="prod-tabs">${prodTabs}</div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px;">Select Reviews — ${escapeHtml(c)}</div>
+          ${prodPanels}
+        </div>`;
+      }).join('');
+
+      root.innerHTML = `<div class="cat-tabs">${catTabsHtml}</div>${catPanelsHtml}`;
+    } catch (err) {
+      console.warn('[Amala][ExtReviews] failed:', err.message);
+      const isTimeout = err.message === 'timeout';
+      root.innerHTML = `<div class="placeholder-block"><div class="ph-icon">⚠️</div>
+        <div class="ph-title">${isTimeout ? 'Reviews took too long to load' : 'Error loading reviews'}</div>
+        <div class="ph-sub">${isTimeout ? "Google's export was slow to respond — this sheet is large and shared across brands. Usually works on retry." : escapeHtml(err.message)}</div>
+        <button class="btn-edit" style="margin-top:10px;" onclick="window.__alaRetryExtReviews()">↻ Retry</button></div>`;
+    }
+  }
+
+  window.initExternalReviews = function () {
+    if (window._alaExtReviewsPromise) return window._alaExtReviewsPromise;
+    window._alaExtReviewsPromise = buildReviewsUI('ext-reviews-root', 'ext');
+    return window._alaExtReviewsPromise;
+  };
+  window.__alaRetryExtReviews = function () { window._alaExtReviewsPromise = null; window.initExternalReviews(); };
+  window.__alaSelectReviewCategory = function (rootId, catSlug, btn) {
+    const root = document.getElementById(rootId); if (!root) return;
+    root.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active')); if (btn) btn.classList.add('active');
+    root.querySelectorAll('.cat-panel').forEach(p => p.classList.remove('active'));
+    const p = document.getElementById(`catpanel-ext-${catSlug}`); if (p) p.classList.add('active');
+  };
+  window.__alaSelectReviewProduct = function (catSlug, prodSlug, btn) {
+    const scope = document.getElementById(`catpanel-${catSlug}`); if (!scope) return;
+    scope.querySelectorAll('.prod-tab').forEach(b => b.classList.remove('active')); if (btn) btn.classList.add('active');
+    scope.querySelectorAll('.prod-panel').forEach(p => p.classList.remove('active'));
+    const p = document.getElementById(`prodpanel-${catSlug}-${prodSlug}`); if (p) p.classList.add('active');
+  };
+})();
+
 </script>
 </body>
 </html>

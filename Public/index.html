@@ -1271,9 +1271,6 @@ details.inci-toggle[open] summary::before{content:'▾ ';}
     <button class="nav-btn" onclick="showPage('inventory-external',this)">
       <svg viewBox="0 0 16 16"><path d="M1 5l7-4 7 4v7l-7 4-7-4V5z"/><path d="M8 1v14M1 5l7 4 7-4"/></svg>Inventory
     </button>
-    <button class="nav-btn" onclick="showPage('fulfillment',this)">
-      <svg viewBox="0 0 16 16"><rect x="1" y="5" width="14" height="9" rx="1.2"/><path d="M1 8h14M5 5V3a1 1 0 011-1h4a1 1 0 011 1v2"/><circle cx="4.5" cy="14" r="1.2"/><circle cx="11.5" cy="14" r="1.2"/></svg>Fulfillment
-    </button>
 
     <!-- Internal-only section — everything currently built lives below this line -->
     <div id="nav-internal-section" style="display:none;">
@@ -1633,8 +1630,6 @@ details.inci-toggle[open] summary::before{content:'▾ ';}
       <button class="sheet-link-btn" onclick="document.getElementById('inventory-sheet-dropdown').classList.toggle('open')">🔗 Source Sheets <span style="font-size:9px;">▾</span></button>
       <div class="sheet-link-dropdown" id="inventory-sheet-dropdown">
         <a href="#" onclick="window.open('https://docs.google.com/spreadsheets/d/'+window.SHEET_CFG.SHEET_PRODUCT_INVENTORY.fileId+'/edit?gid='+window.SHEET_CFG.SHEET_PRODUCT_INVENTORY.gid+'#gid='+window.SHEET_CFG.SHEET_PRODUCT_INVENTORY.gid,'_blank');return false;"><span class="sheet-link-icon">📦</span>Amazon Products Cache</a>
-        <a href="#" onclick="window.open('https://docs.google.com/spreadsheets/d/'+window.SHEET_CFG.SHEET_FULFILLMENT_DAILY_SHIPMENTS.fileId+'/edit?gid='+window.SHEET_CFG.SHEET_FULFILLMENT_DAILY_SHIPMENTS.gid+'#gid='+window.SHEET_CFG.SHEET_FULFILLMENT_DAILY_SHIPMENTS.gid,'_blank');return false;"><span class="sheet-link-icon">🚚</span>Fulfillment Daily Shipments</a>
-        <a href="#" onclick="window.open('https://docs.google.com/spreadsheets/d/'+window.SHEET_CFG.SHEET_FULFILLMENT_DAILY_SHIPMENTS.fileId+'/edit?gid=106183169#gid=106183169','_blank');return false;"><span class="sheet-link-icon">🚚</span>Fulfillment KPIs</a>
       </div>
     </div>
     <div class="page-hd">
@@ -1697,9 +1692,9 @@ details.inci-toggle[open] summary::before{content:'▾ ';}
           <thead><tr>
             <th class="inv-sortable" data-sort="sku" style="cursor:pointer;">SKU <span class="inv-sort-arrow"></span></th>
             <th class="inv-sortable" data-sort="name" style="cursor:pointer;">Product Name <span class="inv-sort-arrow"></span></th>
-            <th title="Fulfillable + Inbound Receiving">FBA</th><th>Qty at Medaltus (FBM)</th><th>WFS</th><th>Available</th><th>Consignment</th><th>Days of Inventory</th><th>Status</th>
+            <th title="Fulfillable + Inbound Receiving">FBA</th><th>Qty at Medaltus (FBM)</th><th>Available</th><th>Days of Inventory</th><th>Status</th>
           </tr></thead>
-          <tbody id="inv-table-body"><tr><td colspan="9" style="color:var(--muted);">Loading…</td></tr></tbody>
+          <tbody id="inv-table-body"><tr><td colspan="7" style="color:var(--muted);">Loading…</td></tr></tbody>
         </table>
       </div>
       <div class="ppc-note">ℹ SKUs with no purchases in the last 90 days aren't scored (no denominator to compute against) — shown as "Unscored," not miscounted into Critical or Healthy.</div>
@@ -1713,75 +1708,7 @@ details.inci-toggle[open] summary::before{content:'▾ ';}
 
   </div>
 
-  <!-- ══ FULFILLMENT ══ -->
-  <div class="page" id="page-fulfillment">
-    <div class="page-hd">
-      <div><div class="page-title">Fulfillment</div><div class="page-sub">ShipStation · Processing performance</div></div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px;">
-      <div class="kpi-card">
-        <div class="kpi-label">Shipped Website Orders • Last 30 Days</div>
-        <div class="kpi-value" id="ff-kpi-shipped30">—</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Our Fulfillment Promise · Last 7 Days</div>
-        <div class="kpi-value" style="color:#1db88a;">100%</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:4px;">Same Day Fulfilled · weekday orders before 1p</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Avg Processing Time · Last 7 Days</div>
-        <div class="kpi-value" id="ff-kpi-proctime">—</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:4px;">Business days · weekends excluded</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Avg Shipping Cost · Last 7 Days</div>
-        <div class="kpi-value" id="ff-kpi-shipcost">—</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Inventory Prepped</div>
-        <div class="kpi-value" id="ff-kpi-invprepped">—</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:4px;">Units received this month</div>
-      </div>
-    </div>
-
-    <div class="ppc-card">
-      <div class="ppc-card-title">Website Orders Shipped by Date · Last 30 Days</div>
-      <div style="position:relative;height:320px;"><canvas id="ff-shipped-chart"></canvas></div>
-      <div class="ppc-note" id="ff-chart-footer">Loading…</div>
-    </div>
-
-    <div class="ppc-card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div class="ppc-card-title" style="margin-bottom:0;">Website Orders by State · Last 30 Days</div>
-        <div style="display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);">
-          <span>Fewer</span>
-          <div style="width:80px;height:7px;border-radius:4px;background:linear-gradient(to right,#dce6f5,#001F60);"></div>
-          <span>More</span>
-        </div>
-      </div>
-      <div style="position:relative;padding:8px 0;">
-        <div class="ff-map-tooltip" id="ff-map-tip"></div>
-        <svg id="ff-us-svg" viewBox="0 0 959 593" style="width:100%;height:auto;display:block;"></svg>
-      </div>
-      <div class="ppc-note" id="ff-map-footer">Loading…</div>
-      <div style="border-top:1px solid var(--border);margin-top:12px;overflow-y:auto;max-height:400px;">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>State</th><th>Orders</th>
-              <th>State</th><th>Orders</th>
-              <th>State</th><th>Orders</th>
-              <th>State</th><th>Orders</th>
-              <th>State</th><th>Orders</th>
-            </tr>
-          </thead>
-          <tbody id="ff-state-table-body"><tr><td colspan="10" style="color:var(--muted);">Loading…</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
+  <!-- Fulfillment page removed 2026-10-06 per Jaclyn (hidden for now). -->
   <!-- ══ SALES ══ -->
   <div class="page" id="page-sales">
     <div class="sheet-link-menu">
@@ -2269,7 +2196,7 @@ details.inci-toggle[open] summary::before{content:'▾ ';}
       <div class="section-label">Key Performance Metrics</div>
       <div class="kpi-row">
         <div class="kpi-card" id="kpi-pct-revenue-invested"><div class="kpi-label">% Revenue Invested</div><div class="kpi-value">5%</div><div class="kpi-mom flat"></div></div>
-        <div class="kpi-card" id="kpi-amazon-fees"><div class="kpi-label">Amazon Fees</div><div class="kpi-value sm">$613.86</div><div class="kpi-mom flat"></div></div>
+        <div class="kpi-card" id="kpi-amazon-fees"><div class="kpi-label">Amazon Fees</div><div class="kpi-value sm">—</div><div class="kpi-mom flat"></div></div>
         <div class="kpi-card" id="kpi-pct-units-ads"><div class="kpi-label">% Units from Ads</div><div class="kpi-value">26%</div><div class="kpi-mom flat"></div></div>
         <div class="kpi-card" id="kpi-ad-clicks"><div class="kpi-label">Ad Clicks</div><div class="kpi-value">272</div><div class="kpi-mom flat">0% MOM</div></div>
         <div class="kpi-card" id="kpi-ad-impressions"><div class="kpi-label">Ad Impressions</div><div class="kpi-value">85K</div><div class="kpi-mom dn">▼ 38% MOM</div></div>
@@ -2523,98 +2450,39 @@ details.inci-toggle[open] summary::before{content:'▾ ';}
        replica. Wired up by initMarketingExternalPage(). -->
   <div class="page" id="page-marketing-external">
     <div class="page-hd">
-      <div><div class="page-title">Marketing</div><div class="page-sub">Brand stewardship · Growth opportunities</div></div>
+      <div><div class="page-title">Marketing</div><div class="page-sub">Insights · Brand stewardship · Growth opportunities</div></div>
     </div>
     <div class="channel-tabs">
-      <button class="ch-tab active" onclick="showChannel('marketing-external','mx-fulfillment-cs',this)">Fulfillment &amp; Customer Service</button>
+      <button class="ch-tab active" onclick="showChannel('marketing-external','mx-insights',this)">Insights</button>
       <button class="ch-tab" onclick="showChannel('marketing-external','mx-stewardship',this)">Brand Stewardship</button>
       <button class="ch-tab" onclick="showChannel('marketing-external','mx-opportunities',this)">Opportunities</button>
     </div>
 
-    <div class="channel-page active" id="mx-fulfillment-cs">
-
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px;">
-        <div class="kpi-card">
-          <div class="kpi-label">Shipped Orders · Last 30 Days</div>
-          <div class="kpi-value" id="mx-mfc-kpi-shipped30">—</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Our Fulfillment Promise · Last 7 Days</div>
-          <div class="kpi-value" style="color:#1db88a;">100%</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px;">Same Day Fulfilled · weekday orders before 1p</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Avg Processing Time · Last 7 Days</div>
-          <div class="kpi-value" id="mx-mfc-kpi-proctime">—</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px;">Business days · weekends excluded</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Avg Shipping Cost · Last 7 Days</div>
-          <div class="kpi-value" id="mx-mfc-kpi-shipcost">—</div>
-        </div>
-        <div class="kpi-card" style="opacity:.6;">
-          <div class="kpi-label">Inventory Prepped</div>
-          <div class="kpi-value" style="color:var(--muted);">—</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px;">Coming soon</div>
-        </div>
+    <!-- Client-facing Insights — added 2026-10-06 per Jaclyn. Read-only copy of
+         Marketing > Insights, locked to the most recent Approved report month. -->
+    <div class="channel-page active" id="mx-insights">
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:14px;" id="mx-insights-date-note">Loading…</div>
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">Unit Sales by Product Category</div>
+        <div style="position:relative;height:320px;"><canvas id="mx-chart-category-sales"></canvas></div>
       </div>
-
-      <div class="ppc-card">
-        <div class="ppc-card-title">Orders Shipped by Date · Last 30 Days</div>
-        <div style="position:relative;height:200px;"><canvas id="mx-mfc-shipped-chart"></canvas></div>
-        <div class="ppc-note" id="mx-mfc-chart-footer">Loading…</div>
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">Subscriptions</div>
+        <div class="kpi-row" style="grid-template-columns:repeat(2,1fr);margin-bottom:16px;">
+          <div class="kpi-card" id="mx-kpi-active-subs"><div class="kpi-label">Active Subscriptions</div><div class="kpi-value" style="font-size:36px;">—</div><div class="kpi-mom flat">Loading…</div></div>
+          <div class="kpi-card" id="mx-kpi-retention"><div class="kpi-label">Subscribe &amp; Save Retention (90 Days)</div><div class="kpi-value" style="font-size:36px;">—</div><div class="kpi-mom flat">Loading…</div></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-size:11px;color:var(--muted);font-weight:600;">Active Subscriptions by Month</div>
+          <div id="legend-mx-sns" style="display:flex;align-items:center;"></div>
+        </div>
+        <div style="position:relative;height:260px;"><canvas id="mx-chart-sns"></canvas></div>
       </div>
-
-      <div class="section-label" style="margin-top:4px;">Customer Service</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;margin-top:4px;">
-        <div class="kpi-card">
-          <div class="kpi-label">Reviews Requested</div>
-          <div class="kpi-value" id="mx-mfc-kpi-reviews">—</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px;">Helium 10 Follow Up</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Compliance Cases Resolved</div>
-          <div class="kpi-value" id="mx-mfc-kpi-compliance">—</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px;" id="mx-mfc-kpi-compliance-sub">Open Cases: —</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Returns Processed</div>
-          <div class="kpi-value" id="mx-mfc-kpi-returns">—</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px;" id="mx-mfc-kpi-returns-sub">Return rate: —</div>
-        </div>
+      <div class="card" id="mx-catinsight-card" style="margin-bottom:16px;display:none;">
+        <div class="card-title">Key Insight</div>
+        <div class="insight-text" id="mx-catinsight-disp"></div>
       </div>
-
-      <div class="ppc-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-          <div class="ppc-card-title" style="margin-bottom:0;">Orders by State · Last 30 Days</div>
-          <div style="display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);">
-            <span>Fewer</span>
-            <div style="width:80px;height:7px;border-radius:4px;background:linear-gradient(to right,#dce6f5,#001F60);"></div>
-            <span>More</span>
-          </div>
-        </div>
-        <div style="position:relative;padding:8px 0;">
-          <div class="ff-map-tooltip" id="mx-mfc-map-tip"></div>
-          <svg id="mx-mfc-us-svg" viewBox="0 0 959 593" style="width:100%;height:auto;display:block;"></svg>
-        </div>
-        <div class="ppc-note" id="mx-mfc-map-footer">Loading…</div>
-        <div style="border-top:1px solid var(--border);margin-top:12px;overflow-y:auto;max-height:400px;">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>State</th><th>Orders</th>
-                <th>State</th><th>Orders</th>
-                <th>State</th><th>Orders</th>
-                <th>State</th><th>Orders</th>
-                <th>State</th><th>Orders</th>
-              </tr>
-            </thead>
-            <tbody id="mx-mfc-state-table-body"><tr><td colspan="10" style="color:var(--muted);">Loading…</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-
-    </div><!-- /mx-fulfillment-cs -->
+    </div>
 
     <div class="channel-page" id="mx-stewardship">
 
@@ -2623,7 +2491,7 @@ details.inci-toggle[open] summary::before{content:'▾ ';}
       <div class="section-label">Key Performance Metrics</div>
       <div class="kpi-row">
         <div class="kpi-card" id="mx-kpi-pct-revenue-invested"><div class="kpi-label">% Revenue Invested</div><div class="kpi-value">—</div><div class="kpi-mom flat"></div></div>
-        <div class="kpi-card" id="mx-kpi-amazon-fees"><div class="kpi-label">Amazon Fees</div><div class="kpi-value sm">$613.86</div><div class="kpi-mom flat"></div></div>
+        <div class="kpi-card" id="mx-kpi-amazon-fees"><div class="kpi-label">Amazon Fees</div><div class="kpi-value sm">—</div><div class="kpi-mom flat"></div></div>
         <div class="kpi-card" id="mx-kpi-pct-units-ads"><div class="kpi-label">% Units from Ads</div><div class="kpi-value">—</div><div class="kpi-mom flat"></div></div>
         <div class="kpi-card" id="mx-kpi-ad-clicks"><div class="kpi-label">Ad Clicks</div><div class="kpi-value">—</div><div class="kpi-mom flat"></div></div>
         <div class="kpi-card" id="mx-kpi-ad-impressions"><div class="kpi-label">Ad Impressions</div><div class="kpi-value">—</div><div class="kpi-mom flat"></div></div>
@@ -2671,17 +2539,37 @@ details.inci-toggle[open] summary::before{content:'▾ ';}
     </div>
     <div class="channel-page" id="mx-opportunities">
 
-      <div class="section-label">Subscribe &amp; Save</div>
-      <div class="kpi-row" style="margin-bottom:20px;">
-        <div class="kpi-card" id="mx-kpi-active-subs"><div class="kpi-label">Active Subscriptions</div><div class="kpi-value" style="font-size:36px;">—</div><div class="kpi-mom flat">Loading…</div></div>
-        <div class="kpi-card" id="mx-kpi-retention"><div class="kpi-label">Subscribe &amp; Save Retention (90 Days)</div><div class="kpi-value" style="font-size:36px;">—</div><div class="kpi-mom flat">Loading…</div></div>
-      </div>
-      <div class="card" style="margin-bottom:20px;">
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:14px;" id="mx-opps-date-note">Loading…</div>
+
+      <div class="card" style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-          <div class="card-title" style="margin-bottom:0;">Active Subscriptions by Month</div>
-          <div id="legend-mx-sns" style="display:flex;align-items:center;"></div>
+          <div style="display:inline-block;background:rgba(0,31,96,.06);border:1px solid rgba(0,31,96,.15);border-radius:4px;padding:3px 10px;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--navy);">What's Been Accomplished</div>
         </div>
-        <div style="position:relative;height:320px;"><canvas id="mx-chart-sns"></canvas></div>
+        <div class="insight-grid" id="mx-acc-grid">
+          <div class="opp-card" id="mx-acc-card-1" style="display:none;">
+            <div class="opp-title" id="mx-acc-title-1"></div>
+            <div class="opp-subtitle" id="mx-acc-subtitle-1"></div>
+            <div class="opp-body" id="mx-acc-body-1"></div>
+            <div class="opp-card-images" id="mx-acc1-images-disp" style="display:none;"></div>
+          </div>
+          <div class="opp-card" id="mx-acc-card-2" style="display:none;">
+            <div class="opp-title" id="mx-acc-title-2"></div>
+            <div class="opp-subtitle" id="mx-acc-subtitle-2"></div>
+            <div class="opp-body" id="mx-acc-body-2"></div>
+            <div class="opp-card-images" id="mx-acc2-images-disp" style="display:none;"></div>
+          </div>
+          <div class="opp-card" id="mx-acc-card-3" style="display:none;">
+            <div class="opp-title" id="mx-acc-title-3"></div>
+            <div class="opp-subtitle" id="mx-acc-subtitle-3"></div>
+            <div class="opp-body" id="mx-acc-body-3"></div>
+          </div>
+          <div class="opp-card" id="mx-acc-card-4" style="display:none;">
+            <div class="opp-title" id="mx-acc-title-4"></div>
+            <div class="opp-subtitle" id="mx-acc-subtitle-4"></div>
+            <div class="opp-body" id="mx-acc-body-4"></div>
+          </div>
+        </div>
+        <div id="mx-acc-empty-state" style="display:none;color:var(--muted);font-size:12px;padding:8px 0;">Nothing added for this report.</div>
       </div>
 
       <div class="card" style="margin-bottom:16px;">
@@ -4655,6 +4543,7 @@ async function initSns() {
           }).join('');
         }
         const yoyDatasets = jbjYoyBuildDatasets(yoyRows);
+        if (window._snsChart) { window._snsChart.destroy(); window._snsChart = null; }
         window._snsChart = new Chart(canvas, {
           type: 'line',
           data: { labels: YOY_MONTHS, datasets: yoyDatasets },
@@ -9511,8 +9400,11 @@ async function initSnsExternal() {
   const RETENTION_SHEET_ID = window.SHEET_CFG.SHEET_SUBSCRIPTIONS.fileId;  // Subscriptions cache — confirmed correct directly from Jaclyn's own URL text 2026-07-28 (my prior 'KR' correction was wrong — misread a screenshot; P and R look nearly identical in that font). The real bug was ONLY the gid below, which pointed at a tab with pbj's data instead of évolis's.
   const RETENTION_GID = window.SHEET_CFG.SHEET_SUBSCRIPTIONS.gid;                                   // 'amala' tab, confirmed directly from Jaclyn's screenshot 2026-07-28 (previous gid 1742224413 was also wrong — different tab in the wrong file entirely)
 
-  const kpiValues = document.querySelectorAll('#mx-opportunities .kpi-value');
-  const subsKpiEl = kpiValues[0] || null;
+  const subsKpiEl = document.querySelector('#mx-kpi-active-subs .kpi-value') || null;
+  // Locked to the approved report month (set by initMarketingExternalPage).
+  const _ap = window.__approvedReportMonth;
+  const _cap = _ap ? (_ap.year * 12 + _ap.month) : null;
+  const _withinCap = x => _cap === null || isNaN(x.y) || isNaN(x.m) || (x.y * 12 + x.m) <= _cap;
   const retentionKpiEl = document.querySelector('#mx-kpi-retention .kpi-value') || null;
 
   try {
@@ -9531,7 +9423,7 @@ async function initSnsExternal() {
       const useRows = brandRows.length ? brandRows : rows;
       console.log('[Amala][subscriptions] rows after brand filter:', useRows.length, '(', rows.length - useRows.length, 'dropped by brand filter )');
 
-      const withDate = useRows.map(r => ({ row: r, y: parseInt(r.year, 10), m: parseInt(r.month, 10) }));
+      const withDate = useRows.map(r => ({ row: r, y: parseInt(r.year, 10), m: parseInt(r.month, 10) })).filter(_withinCap);
       const sortable = withDate.length > 0 && withDate.every(x => !isNaN(x.y) && !isNaN(x.m));
       if (sortable) withDate.sort((a, b) => (a.y - b.y) || (a.m - b.m));
       if (withDate.length) {
@@ -9576,6 +9468,7 @@ async function initSnsExternal() {
           const idx = distinctYears.indexOf(y);
           return idx <= 0 ? '#f4dfd0' : (idx === distinctYears.length - 1 ? '#001f60' : '#6b7ba2');
         });
+        if (window._snsChartExternal) { window._snsChartExternal.destroy(); window._snsChartExternal = null; }
         window._snsChartExternal = new Chart(canvas, {
           type: 'bar',
           data: { labels: trimmedLabels, datasets: [{ label: 'Active Subscriptions', data: trimmedValues, backgroundColor: bg }] },
@@ -9628,7 +9521,7 @@ async function initSnsExternal() {
       // per brand (i.e. it's historical, not a single current snapshot).
       // Detecting that rather than assuming it, so this doesn't silently
       // show a fabricated MOM if the sheet turns out to be snapshot-only.
-      const withDateR = useRows.map(r => ({ row: r, y: parseInt(r.year, 10), m: parseInt(r.month, 10) }));
+      const withDateR = useRows.map(r => ({ row: r, y: parseInt(r.year, 10), m: parseInt(r.month, 10) })).filter(_withinCap);
       const hasHistory = withDateR.length > 1 && withDateR.every(x => !isNaN(x.y) && !isNaN(x.m));
       if (!hasHistory) {
         console.warn('[Amala][subscriptions] hasHistory=false — reason:', withDateR.length <= 1 ? ('only ' + withDateR.length + ' row(s) after brand filter, need 2+') : 'year/month not parsing as numbers on every row — check column names/values above');
@@ -9726,6 +9619,33 @@ async function initSnsExternal() {
     else { el.style.display = 'none'; }
   }
 
+
+  function renderAccomplishedExternal(row) {
+    const pick = (n, f) => row ? (row[`acc${n}_${f}`] || row[`accomplished${n}_${f}`] || '').trim() : '';
+    const esc = v => { const d = document.createElement('div'); d.textContent = String(v == null ? '' : v); return d.innerHTML; };
+    let anyVisible = false;
+    [1, 2, 3, 4].forEach(n => {
+      const card = document.getElementById(`mx-acc-card-${n}`);
+      if (!card) return;
+      const title = pick(n, 'title'), subtitle = pick(n, 'subtitle'), body = pick(n, 'body');
+      if (!title) { card.style.display = 'none'; return; }
+      anyVisible = true;
+      card.style.display = '';
+      document.getElementById(`mx-acc-title-${n}`).textContent = title;
+      const subEl = document.getElementById(`mx-acc-subtitle-${n}`);
+      if (subtitle) { subEl.textContent = subtitle; subEl.style.display = ''; } else { subEl.textContent = ''; subEl.style.display = 'none'; }
+      document.getElementById(`mx-acc-body-${n}`).textContent = body;
+      const imgEl = document.getElementById(`mx-acc${n}-images-disp`);
+      if (imgEl) {
+        const urls = [1, 2, 3, 4, 5, 6].map(i => pick(n, `image${i}`)).filter(Boolean);
+        if (urls.length) { imgEl.style.display = 'flex'; imgEl.innerHTML = urls.map(u => `<img src="${esc(u)}" class="opp-card-img" alt="" onerror="this.style.display='none'">`).join(''); }
+        else { imgEl.innerHTML = ''; imgEl.style.display = 'none'; }
+      }
+    });
+    const emptyEl = document.getElementById('mx-acc-empty-state');
+    if (emptyEl) emptyEl.style.display = anyVisible ? 'none' : 'block';
+  }
+
   async function renderFutureOpportunitiesExternal(key) {
     const emptyEl = document.getElementById('mx-opp-empty-state');
     if (!key || typeof window.reportInsightsFetchRow !== 'function') {
@@ -9764,27 +9684,38 @@ async function initSnsExternal() {
     if (window.__marketingExternalPromise) return window.__marketingExternalPromise;
     window.__marketingExternalPromise = (async function () {
       const key = await window.resolveApprovedMonth();
-
-      const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      const dateNoteEl = document.getElementById('mx-stewardship-date-note');
-      if (dateNoteEl) {
-        dateNoteEl.textContent = key
-          ? `Showing ${monthNames[key.month-1]} ${key.year} · most recently approved report`
-          : 'No approved report available yet.';
-      }
-
-      // Stewardship + Future Opportunities — locked to the Approved month.
       window.__approvedReportMonth = key;
-      if (key && typeof window.initStewardshipExternal === 'function') {
-        await window.initStewardshipExternal();
-      }
-      await renderFutureOpportunitiesExternal(key);
 
-      // Fulfillment & CS + Subscribe & Save — always live/current, regardless
-      // of whether anything has ever been approved.
+      // Every client Marketing tab shows ONLY the most recent Approved month
+      // (same rule as client Sales). Nothing approved yet -> each tab shows
+      // the note and its content stays hidden.
+      const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const note = key ? `Showing ${monthNames[key.month-1]} ${key.year} — most recently approved report` : 'No approved report available yet.';
+      [['mx-insights', 'mx-insights-date-note'], ['mx-stewardship', 'mx-stewardship-date-note'], ['mx-opportunities', 'mx-opps-date-note']].forEach(([pageId, noteId]) => {
+        const noteEl = document.getElementById(noteId);
+        if (noteEl) noteEl.textContent = note;
+        const pg = document.getElementById(pageId);
+        if (!key && pg) [...pg.children].forEach(c => { if (c.id !== noteId) c.style.display = 'none'; });
+      });
+      if (!key) return;
+
+      const row = (typeof window.reportInsightsFetchRow === 'function')
+        ? await window.reportInsightsFetchRow('amala', { year: String(key.year), month: String(key.month) }).catch(e => { console.warn('[MarketingExternal] report row fetch failed:', e.message); return null; })
+        : null;
+
+      // Insights — Key Insight text (card hidden when blank)
+      const ki = row && (row.category_key_insight || '').trim();
+      const kiCard = document.getElementById('mx-catinsight-card');
+      const kiDisp = document.getElementById('mx-catinsight-disp');
+      if (kiCard && kiDisp) { if (ki) { kiDisp.innerHTML = ki.replace(/</g, '&lt;').replace(/\n/g, '<br>'); kiCard.style.display = ''; } else { kiCard.style.display = 'none'; } }
+
+      renderAccomplishedExternal(row);
+      const ym = `${key.year}-${String(key.month).padStart(2, '0')}`;
       await Promise.all([
-        typeof window.initMarketingFulfillmentCSExternal === 'function' ? window.initMarketingFulfillmentCSExternal() : null,
+        typeof window.initStewardshipExternal === 'function' ? window.initStewardshipExternal() : null,
+        renderFutureOpportunitiesExternal(key),
         typeof initSnsExternal === 'function' ? initSnsExternal() : null,
+        typeof window.renderCategorySalesChart === 'function' ? window.renderCategorySalesChart('mx-chart-category-sales', '_categorySalesChartExternal', ym) : null,
       ]);
     })();
     return window.__marketingExternalPromise;
@@ -12537,8 +12468,13 @@ window.bmRenderMomentumCards = function () {
 // Subscriptions card, moved here from Marketing > Opportunities.
 window.initSalesInsights = async function () {
   initSns(); // Subscriptions card — moved here, function itself unchanged
+  return window.renderCategorySalesChart('chart-category-sales', '_categorySalesChart', null);
+};
 
-  const canvas = document.getElementById('chart-category-sales');
+// Shared by Marketing > Insights (internal, no cutoff) and the client-facing
+// Marketing > Insights (cut off at the approved report month, maxMonthKey 'YYYY-MM').
+window.renderCategorySalesChart = async function (canvasId, chartKey, maxMonthKey) {
+  const canvas = document.getElementById(canvasId);
   if (!canvas) return;
   try {
     function isCsv(t) { return !!t && t.trim().length > 0 && !t.trim().startsWith('<'); }
@@ -12645,7 +12581,7 @@ window.initSalesInsights = async function () {
       });
     });
 
-    const monthKeys = Object.keys(byMonth).sort();
+    const monthKeys = Object.keys(byMonth).filter(k => !maxMonthKey || k <= maxMonthKey).sort();
     if (!monthKeys.length) { console.warn('[Amala][SalesInsights] no order rows matched a known SKU category — check column K assignments.'); return; }
     const monthAbbr = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const labels = monthKeys.map(k => { const [y, m] = k.split('-'); return `${monthAbbr[parseInt(m, 10) - 1]} '${y.slice(2)}`; });
@@ -12658,8 +12594,8 @@ window.initSalesInsights = async function () {
       borderRadius: 3,
     }));
 
-    if (window._categorySalesChart) { window._categorySalesChart.destroy(); window._categorySalesChart = null; }
-    window._categorySalesChart = new Chart(canvas, {
+    if (window[chartKey]) { window[chartKey].destroy(); window[chartKey] = null; }
+    window[chartKey] = new Chart(canvas, {
       type: 'bar',
       data: { labels, datasets },
       options: {
@@ -16888,133 +16824,104 @@ function invStatusFor(days) {
 
 const INV_STATUS_LABEL = { oos: 'OOS', critical: 'Critical', low: 'Low', stable: 'Stable', healthy: 'Healthy', unscored: 'Unscored' };
 
+// Ported 2026-10-06 from Cosmette's Inventory page (itself adapted from
+// Skinuva's). Differences from the version this file inherited:
+//  - catalog SKUs only (no bundles / multi-packs / -CA / -UK listings) — Amala's
+//    Ritual bundles (ALA-*-RIT) are excluded via the Master SKU List's SKU Type =
+//    BUNDLE, since Cosmette's "+" check can't catch that SKU style
+//  - "-SF" seller-fulfilled rows roll up into their root SKU
+//  - Available = the sheet's own total_quantity (Cosmette's rule; doesn't
+//    subtract reserved). Identical to the old FBA+FBM-reserved result on every
+//    Amala SKU as of 2026-10-06.
+//  - no WFS / Consignment columns
+function invBaseSku(s) { return (s || '').trim().toUpperCase().replace(/-SF$/i, ''); }
+function invRootSku(s) { const m = invBaseSku(s).match(/^[A-Z]+\d+/); return m ? m[0] : invBaseSku(s); }
+
 async function loadInventoryPage() {
   const tbody = document.getElementById('inv-table-body');
   if (!tbody) return;
   try {
-    const [csv, consignmentCsv, statusCsv] = await Promise.all([
-      fetch(ovCsvUrl(OV_PRODUCTS_CACHE_SHEET_ID, OV_PRODUCTS_CACHE_GID)).then(r => r.ok ? r.text() : '').catch(() => ''),
-      // 'amala' tab doesn't exist in this sheet yet (Cin7 pipeline not
-      // built) — this will just fail quietly and consignmentMap stays
-      // empty, which is exactly the honest "no data yet" state.
-      fetch(ovCsvUrl(OV_CONSIGNMENT_SHEET_ID, window.SHEET_CFG.SHEET_CONSIGNMENT_INVENTORY.gid)).then(r => r.ok ? r.text() : '').catch(() => ''),
-      // Master Product Short Name sheet's own Status column (LIVE/DELETED)
-      // — same sheet/gid as the name lookups used elsewhere, col B=SKU,
-      // col H=Status. Used to grey out + sort discontinued SKUs to the
-      // bottom, and drop them entirely once there's no stock left at all.
-      fetch(ovCsvUrl('1NNRTRQxQl2r4XivAvH700CC39p49GD2xfZlyRNqahGA', '164358627')).then(r => r.ok ? r.text() : '').catch(() => ''),
+    const master = window.SHEET_CFG.SHEET_MASTER_SKU_LIST || {};
+    const [csv, statusCsv] = await Promise.all([
+      fetch(ovCsvUrl(OV_PRODUCTS_CACHE_SHEET_ID, OV_PRODUCTS_CACHE_GID) + `&_cb=${Date.now()}`).then(r => r.ok ? r.text() : '').catch(() => ''),
+      fetch(ovCsvUrl(master.fileId || '', master.gid || '') + `&_cb=${Date.now()}`).then(r => r.ok ? r.text() : '').catch(() => ''),
     ]);
     const rows = parseCsvToRows(csv);
-    if (!rows.length) { tbody.innerHTML = '<tr><td colspan="9" style="color:var(--muted);">No data</td></tr>'; return; }
+    if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7" style="color:var(--muted);">No data</td></tr>'; return; }
 
-    const consignmentMap = {};
-    parseCsvToRows(consignmentCsv).forEach(r => {
-      // Consignment SKUs always carry a "C-" prefix over the base SKU
-      // (e.g. "C-EVO0001" = base SKU "EVO0001") — same convention
-      // established for the ShipStation-based consignment cron. This map
-      // was built keyed by the RAW sheet SKU (including "C-") while the
-      // lookup below uses the product row's base SKU — a straight
-      // mismatch that meant this column could never match anything,
-      // regardless of whether the sheet had real data.
-      const sku = (r.sku || '').trim().toUpperCase().replace(/^C-/, '');
-      if (sku) consignmentMap[sku] = parseFloat(r.available) || 0;
-    });
-
-    // WFS (Walmart Fulfillment Services) — added 2026-08-04 per Jaclyn.
-    // Intentionally left EMPTY: no cron exists yet to pull Walmart
-    // inventory (this table has only ever pulled Amazon inventory via
-    // Products Cache). Structured as its own map, same shape as
-    // consignmentMap above, so wiring in a real sheet later is a one-line
-    // change: fetch the sheet alongside consignmentCsv above, then fill
-    // this map the same way (keyed by base SKU, value = on-hand/available
-    // quantity). Until then every row shows "—" for WFS, which is the
-    // honest "not tracked yet" state — not a fabricated zero.
-    const wfsMap = {};
-
-    const statusMap = {};
+    // Master SKU List: Status (LIVE/DELETED) and SKU Type (CATALOG/BUNDLE)
+    const statusMap = {}, skuTypeMap = {};
     parseCsvToRows(statusCsv).forEach(r => {
-      const sku = (r.sku || '').trim().toUpperCase().replace(/-SF$/i, '');
+      const sku = invBaseSku(r.sku);
+      if (!sku) return;
       const status = (r.status || '').trim().toUpperCase();
-      if (sku && status) statusMap[sku] = status;
+      if (status) statusMap[sku] = status;
+      const type = (r['sku type'] || '').trim().toUpperCase();
+      if (type) skuTypeMap[sku] = type;
     });
+    function isCatalogSku(rawSku) {
+      const upper = (rawSku || '').trim().toUpperCase();
+      if (!upper) return false;
+      if (upper.includes('+')) return false;
+      if (upper.startsWith('VMP_')) return false;
+      if (/-CA$/.test(upper) || /-UK$/.test(upper)) return false;
+      if (skuTypeMap[invBaseSku(upper)] === 'BUNDLE') return false;
+      return true;
+    }
 
-    // Daily snapshot cron — most recent date only
     const latestDate = rows.reduce((max, r) => ((r.date || '') > max ? r.date : max), '');
     const latestRows = rows.filter(r => r.date === latestDate);
+    console.log('[Amala][inventory] latestDate:', latestDate, '— rows at that date:', latestRows.length);
 
-    // Added 2026-08-03 to diagnose travel-size SKUs (EVO0014-EVO0019)
-    // reportedly missing from this page despite showing LIVE status on
-    // Product Short Name and having real quantity data in Products Cache
-    // for the latest date, per Jaclyn. This log shows exactly what
-    // survives each stage, so the next load pinpoints where they're
-    // actually being lost rather than guessing further.
-    console.log('[Amala][inventory] latestDate:', latestDate, '— rows at that date:', latestRows.length, '— all SKUs at that date:', latestRows.map(r => r.sku));
-
-    _invAllRows = latestRows.map(r => {
-      // FBA now includes Inbound_receiving (col H on Products Cache) —
-      // added 2026-08-06 per Jaclyn: units in transit to/being received at
-      // an Amazon FC are real inbound FBA stock, not yet fulfillable but
-      // real nonetheless, so they now count toward FBA here — which also
-      // flows through into Available and the Total Units Available KPI
-      // below, since both derive from qtyAtAmazon.
-      const inboundReceiving = parseInt(r.inbound_receiving_quantity ?? r.inbound_receiving, 10) || 0; // FIXED 2026-10-05: real column is inbound_receiving_quantity — was always reading 0
-      const qtyAtAmazon    = (parseInt(r.fulfillable_quantity, 10) || 0) + inboundReceiving;
-      const qtyAtMedaltus  = parseInt(r.seller_fulfilled_quantity, 10) || 0;
-      const allocated       = parseInt(r.reserved_quantity, 10) || 0;
-      // REVISED 2026-08-04 per Jaclyn: Available now DOES subtract Allocated
-      // (previous version, and the 2026-07-20 confirmation behind it,
-      // treated Allocated as a separate bucket that shouldn't be removed
-      // again — that's been superseded by this instruction). Floored at 0
-      // rather than allowed to go negative, since Allocated can in
-      // principle exceed current fulfillable+seller-fulfilled stock
-      // (e.g. reservations against incoming inventory) and a negative
-      // "Available" would read as a bug rather than a real state.
-      const available        = Math.max(0, qtyAtAmazon + qtyAtMedaltus - allocated);
-      const onHand             = parseFloat(r.qty_on_hand) || 0; // kept only for the top KPI card sum — that definition is unchanged
-      const daysRaw             = r.days_of_inventory;
-      const days                 = (daysRaw === '' || daysRaw === null || daysRaw === undefined) ? '' : parseFloat(daysRaw);
-      const skuUpper              = (r.sku || '').trim().toUpperCase();
-      const consignment            = skuUpper in consignmentMap ? consignmentMap[skuUpper] : '';
-      // WFS (Walmart Fulfillment Services) — added 2026-08-04 per Jaclyn.
-      // Products Cache only ever pulled Amazon inventory (fulfillable/
-      // seller-fulfilled/reserved) and Amazon 90-day sales for the days-of-
-      // inventory calc — this whole table has been Amazon-only + a bolted-
-      // on Consignment column. No Walmart inventory sync exists yet to
-      // populate this. wfsMap (built above from a to-be-created sheet, same
-      // "empty string means not yet available" convention as Consignment)
-      // is intentionally left EMPTY until that cron exists — showing "—"
-      // for every row rather than fabricating a 0 that would look like
-      // "confirmed zero Walmart stock" instead of "not tracked yet."
-      const wfs                     = skuUpper in wfsMap ? wfsMap[skuUpper] : '';
-      // OOS overrides the days-of-inventory status entirely — a SKU sitting
-      // at zero Available units right now is a more urgent, direct signal
-      // than a lagging days-of-inventory projection, and previously such
-      // SKUs were getting buried under "Critical" or "Unscored" instead of
-      // being called out on their own. Per Jaclyn, 2026-07-24.
-      const status = available === 0 ? 'oos' : invStatusFor(days);
+    const perVariantRows = latestRows.filter(r => isCatalogSku(r.sku)).map(r => {
+      const inboundReceiving = parseInt(r.inbound_receiving_quantity, 10) || 0;
+      const qtyAtAmazon = (parseInt(r.fulfillable_quantity, 10) || 0) + inboundReceiving;
+      const qtyAtMedaltus = parseInt(r.seller_fulfilled_quantity, 10) || 0;
+      const allocated = parseInt(r.reserved_quantity, 10) || 0;
+      const totalQty = parseFloat(r.total_quantity) || 0;
+      const onHand = parseFloat(r.qty_on_hand) || 0;
+      const daysRaw = r.days_of_inventory;
+      const days = (daysRaw === '' || daysRaw === null || daysRaw === undefined) ? '' : parseFloat(daysRaw);
       return {
-        sku: r.sku || '', name: r.name || r.sku || '',
-        qtyAtAmazon, qtyAtMedaltus, available, allocated, wfs, onHand, consignment,
-        days, status,
-        discontinued: statusMap[skuUpper] === 'DELETED',
+        root: invRootSku(r.sku), name: r.name || r.sku || '',
+        qtyAtAmazon, qtyAtMedaltus, allocated, totalQty, onHand, days,
+        discontinued: statusMap[invBaseSku(r.sku)] === 'DELETED',
+      };
+    });
+
+    const byRoot = {};
+    perVariantRows.forEach(v => {
+      if (!byRoot[v.root]) byRoot[v.root] = { sku: v.root, name: v.name, qtyAtAmazon: 0, qtyAtMedaltus: 0, allocated: 0, totalQty: 0, onHand: 0, days: '', discontinued: true };
+      const acc = byRoot[v.root];
+      acc.qtyAtAmazon += v.qtyAtAmazon;
+      acc.qtyAtMedaltus += v.qtyAtMedaltus;
+      acc.allocated += v.allocated;
+      acc.totalQty += v.totalQty;
+      acc.onHand += v.onHand;
+      if (v.name && (!acc.name || acc.name === v.root)) acc.name = v.name;
+      if (v.days !== '') acc.days = (acc.days === '' ? v.days : Math.min(acc.days, v.days));
+      if (!v.discontinued) acc.discontinued = false;
+    });
+
+    _invAllRows = Object.values(byRoot).map(acc => {
+      const available = Math.max(0, acc.totalQty);
+      // OOS overrides the days-of-inventory status (zero units right now is
+      // the more urgent signal).
+      const status = available === 0 ? 'oos' : invStatusFor(acc.days);
+      return {
+        sku: acc.sku, name: acc.name,
+        qtyAtAmazon: acc.qtyAtAmazon, qtyAtMedaltus: acc.qtyAtMedaltus, available, allocated: acc.allocated, onHand: acc.onHand,
+        days: acc.days, status, discontinued: acc.discontinued,
       };
     }).filter(r => !(r.discontinued && r.onHand === 0));
-
-    // Second half of the same diagnostic — shows what's left AFTER the
-    // discontinued+zero-stock filter, plus the raw computed fields for
-    // each expected travel SKU specifically (onHand/discontinued/status),
-    // so if one of those two things is unexpectedly true/zero for a
-    // travel SKU, it'll be visible here directly instead of guessed at.
-    console.log('[Amala][inventory] SKUs after discontinued+onHand filter:', _invAllRows.length, '—', _invAllRows.map(r => r.sku));
-    // évolis-specific travel-SKU diagnostic removed — Just Bjorn has no
-    // travel-size SKUs, so this check doesn't apply here.
+    console.log('[Amala][inventory] catalog SKUs shown:', _invAllRows.length, '—', _invAllRows.map(r => r.sku).join(', '));
 
     renderInventoryKpis(_invAllRows);
     renderInventoryTable(_invAllRows);
     wireInventoryControls();
   } catch (err) {
     console.warn('[Inventory] load failed:', err.message);
-    tbody.innerHTML = '<tr><td colspan="9" style="color:var(--muted);">Error loading</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="color:var(--muted);">Error loading</td></tr>';
   }
 }
 
@@ -17055,7 +16962,7 @@ let _invSortDir = 'asc';
 function renderInventoryTable(rows) {
   const tbody = document.getElementById('inv-table-body');
   if (!tbody) return;
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="9" style="color:var(--muted);">No SKUs match</td></tr>'; return; }
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7" style="color:var(--muted);">No SKUs match</td></tr>'; return; }
 
   let sorted;
   if (_invSortKey === 'sku' || _invSortKey === 'name') {
@@ -17078,9 +16985,7 @@ function renderInventoryTable(rows) {
       <td>${r.name}${r.discontinued ? ' <span style="font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);border-radius:10px;padding:1px 6px;">Discontinued</span>' : ''}</td>
       <td>${r.qtyAtAmazon.toLocaleString()}</td>
       <td>${r.qtyAtMedaltus.toLocaleString()}</td>
-      <td>${r.wfs === '' ? '—' : r.wfs.toLocaleString()}</td>
       <td>${r.available.toLocaleString()}</td>
-      <td>${r.consignment === '' ? '—' : r.consignment.toLocaleString()}</td>
       <td>${r.days === '' ? '—' : Math.round(r.days).toLocaleString()}</td>
       <td><span class="inv-status-pill ${r.status}">${INV_STATUS_LABEL[r.status]}</span></td>
     </tr>
@@ -17214,7 +17119,8 @@ async function loadOosLog() {
     const nameBySku = {};
     parseCsvToRows(namesCsv).forEach(r => {
       const sku = (r.sku || '').trim().toUpperCase();
-      if (sku && r.name) nameBySku[sku] = r.name;
+      const nm = r['product short name'] || r.name;
+      if (sku && nm) nameBySku[sku] = nm;
     });
 
     // Defensive brand filter — case-insensitive, since the migration doc

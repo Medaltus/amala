@@ -6297,9 +6297,8 @@ async function initSns() {
         ltdEl.textContent = '$' + Math.round(ltdTotal).toLocaleString();
       }
 
-      // Amazon Fees KPI intentionally left as-is — pending a Finances/Product Fees
-      // API sync (net-new backend job), same shape as AD_SUMMARY. Do not overwrite
-      // with a guess in the meantime.
+      // Amazon Fees — sum of SHEET_ORDERS col P for this month (see amazon_fees helper).
+      if (typeof window.amalaRenderAmazonFeesKpi === 'function') await window.amalaRenderAmazonFeesKpi('kpi-amazon-fees', year, month);
 
     } catch (err) {
       console.warn('[Amala] initStewardshipLive failed, charts/KPIs remain at last rendered values:', err.message);
@@ -9130,9 +9129,8 @@ async function initSns() {
         ltdEl.textContent = '$' + Math.round(ltdTotal).toLocaleString();
       }
 
-      // Amazon Fees KPI intentionally left as-is — pending a Finances/Product Fees
-      // API sync (net-new backend job), same shape as AD_SUMMARY. Do not overwrite
-      // with a guess in the meantime.
+      // Amazon Fees — sum of SHEET_ORDERS col P for the approved month.
+      if (typeof window.amalaRenderAmazonFeesKpi === 'function') await window.amalaRenderAmazonFeesKpi('mx-kpi-amazon-fees', year, month);
 
     } catch (err) {
       console.warn('[Amala] initStewardshipExternal failed, charts/KPIs remain at last rendered values:', err.message);
@@ -20431,7 +20429,7 @@ async function loadAuditResultsFromSheet() {
     const keyInsight = pdfxText('#catinsight-disp');
     return '' +
       '<div class="pdfx-page">' +
-        '<div class="pdfx-inner">' +
+        '<div class="pdfx-inner" style="padding-bottom:0;">' +
           pdfxHeaderBand(monthYear, 'Sales') +
           '<div class="pdfx-chlabel">Insights</div>' +
           '<div class="pdfx-card" style="margin-top:6px;margin-bottom:14px;"><div class="pdfx-card-title">Unit Sales by Product Category</div>' + pdfxChartBlock('_categorySalesChart') + '</div>' +
@@ -20442,7 +20440,6 @@ async function loadAuditResultsFromSheet() {
             pdfxChartBlock('_snsChart') +
           '</div>' +
           (keyInsight ? '<div class="pdfx-card" style="margin-bottom:0;"><div class="pdfx-card-title">Key Insight</div><div class="pdfx-insight">' + pdfxEscape(keyInsight) + '</div></div>' : '') +
-          pdfxFooter(monthYear) +
         '</div>' +
       '</div>';
   }
@@ -23152,6 +23149,97 @@ window.addEventListener('load', async () => {
     scope.querySelectorAll('.prod-tab').forEach(b => b.classList.remove('active')); if (btn) btn.classList.add('active');
     scope.querySelectorAll('.prod-panel').forEach(p => p.classList.remove('active'));
     const p = document.getElementById(`prodpanel-${catSlug}-${prodSlug}`); if (p) p.classList.add('active');
+  };
+})();
+
+</script>
+<script>
+// ═══════════════════════════════════════════════════════════════════════
+// AMAZON FEES — Brand Stewardship KPI (internal + client), per Jaclyn
+// 2026-10-07: sum of SHEET_ORDERS column P ("Amazon Estimated fees") for
+// the month. One row per line item (multi-SKU orders have one row per SKU,
+// each with its own fee), so every row is summed; cancelled rows have a
+// blank fee and add 0. Dates appear as both "6/9/2026" and "2026-07-14".
+// SHEET_ORDERS is a rolling ~90-day sheet: a month that starts before the
+// sheet's earliest date returns null (shown as "—"), not a false $0.
+// ═══════════════════════════════════════════════════════════════════════
+(function () {
+  'use strict';
+  let _ordersPromise = null;
+
+  function parseRecords(text) {
+    const recs = []; let f = '', rec = [], q = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) { if (c === '"') { if (text[i+1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+      else if (c === '"') q = true;
+      else if (c === ',') { rec.push(f); f = ''; }
+      else if (c === '\r') {}
+      else if (c === '\n') { rec.push(f); f = ''; recs.push(rec); rec = []; }
+      else f += c;
+    }
+    if (f.length || rec.length) { rec.push(f); recs.push(rec); }
+    return recs.filter(r => !(r.length === 1 && r[0] === ''));
+  }
+  function monthKeyOf(raw) {
+    const s = String(raw || '').trim();
+    let m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s);
+    if (m) return `${m[1]}-${String(+m[2]).padStart(2, '0')}`;
+    m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(s);
+    if (m) return `${m[3]}-${String(+m[1]).padStart(2, '0')}`;
+    return null;
+  }
+  const amt = v => parseFloat(String(v || '').replace(/[$,\s]/g, '')) || 0;
+
+  function loadOrders() {
+    if (_ordersPromise) return _ordersPromise;
+    _ordersPromise = (async () => {
+      const cfg = window.SHEET_CFG && window.SHEET_CFG.SHEET_ORDERS;
+      if (!cfg || !cfg.fileId || !cfg.gid) throw new Error('SHEET_ORDERS not configured');
+      const url = `https://docs.google.com/spreadsheets/d/${cfg.fileId}/export?format=csv&gid=${cfg.gid}&_cb=${Date.now()}`;
+      const res = await fetch(url); if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      const t = text.trim(); if (!t || t.startsWith('<') || t.startsWith('{')) throw new Error('orders sheet did not return CSV');
+      const recs = parseRecords(t + '\n');
+      const hdr = recs[0].map(h => h.trim().toLowerCase());
+      let feeIdx = hdr.indexOf('amazon estimated fees'); if (feeIdx < 0) feeIdx = 15; // column P
+      const dateIdx = hdr.indexOf('date') >= 0 ? hdr.indexOf('date') : 1;
+      const byMonth = {}; let minKey = null;
+      recs.slice(1).forEach(r => {
+        const k = monthKeyOf(r[dateIdx]); if (!k) return;
+        if (!minKey || k < minKey) minKey = k;
+        byMonth[k] = (byMonth[k] || 0) + amt(r[feeIdx]);
+      });
+      console.log('[Amala][AmazonFees] header col', feeIdx, JSON.stringify(recs[0][feeIdx]), '— by month:', JSON.stringify(byMonth), '— earliest month in sheet:', minKey);
+      return { byMonth, minKey };
+    })();
+    _ordersPromise.catch(() => { _ordersPromise = null; });
+    return _ordersPromise;
+  }
+
+  // Returns { curr, prev } (null where the month is before sheet coverage).
+  window.amalaAmazonFeesForMonth = async function (year, month) {
+    const { byMonth, minKey } = await loadOrders();
+    const key = (y, m) => `${y}-${String(m).padStart(2, '0')}`;
+    let py = year, pm = month - 1; if (pm === 0) { pm = 12; py--; }
+    const val = k => (minKey && k >= minKey) ? Math.round((byMonth[k] || 0) * 100) / 100 : null;
+    return { curr: val(key(year, month)), prev: val(key(py, pm)) };
+  };
+
+  // Writes the value + MoM badge into a Stewardship KPI card.
+  window.amalaRenderAmazonFeesKpi = async function (cardId, year, month) {
+    const el = document.getElementById(cardId); if (!el) return;
+    try {
+      const { curr, prev } = await window.amalaAmazonFeesForMonth(year, month);
+      const v = el.querySelector('.kpi-value');
+      if (v) v.textContent = curr == null ? '—' : '$' + curr.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const badge = el.querySelector('.kpi-mom');
+      if (badge) {
+        const p = (curr != null && prev) ? Math.round(((curr - prev) / prev) * 100) : null;
+        if (p == null) { badge.className = 'kpi-mom flat'; badge.textContent = ''; }
+        else { badge.className = 'kpi-mom ' + (p === 0 ? 'flat' : p > 0 ? 'up' : 'dn'); badge.textContent = `${p > 0 ? '▲ ' : p < 0 ? '▼ ' : ''}${Math.abs(p)}% MOM`; }
+      }
+    } catch (e) { console.warn('[Amala][AmazonFees] failed for', cardId, ':', e.message); }
   };
 })();
 
